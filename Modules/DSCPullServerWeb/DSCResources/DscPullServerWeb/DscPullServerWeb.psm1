@@ -2,7 +2,7 @@
 [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSDSCDscTestsPresent', '')]
 param()
 
-
+Import-Module -Name WebAdministration
 ##
 ## DSC METHODS
 ##
