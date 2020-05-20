@@ -160,6 +160,7 @@ function uiCreateTableRow(page, item) {
             html += uiCreateTableCell(item.OperationType);
             html += uiCreateTableCell(uiFormatDateTime(item.StartTime));
             html += uiCreateTableCell(item.Status);
+            html += uiFormatResourceID(item.NotCompliantRessources);
             break;
         case "configurations":
             html += uiCreateTableCell(item.Name);
@@ -244,6 +245,15 @@ function uiFormatIPAddress(ipAddress) {
     });
     return ipAddresses.join("<br>")
 }
+
+function uiFormatResources(NotCompliantRessources) {
+    var ResourceIds = new Array();
+    NotCompliantRessources.split(";").forEach(function (value, index, array) {
+        ResourceIds.push(value);
+    });
+    return ResourceIds.join("<br>")
+}
+
 
 
 
@@ -390,7 +400,7 @@ function apiDeleteConfiguration(name, confirm) {
 
 function apiUploadModule(file) {
     var parts = file.name.substring(0, file.name.length - 4).split('_', 2);
-    var name    = parts[0];
+    var name = parts[0];
     var version = parts[1];
     $.ajax({
         type: "PUT",

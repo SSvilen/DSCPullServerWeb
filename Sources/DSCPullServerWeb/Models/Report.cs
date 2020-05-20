@@ -1,109 +1,94 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace DSCPullServerWeb.Models
-{
-    public class Report
-    {
-        public string Id
-        {
+namespace DSCPullServerWeb.Models {
+    public class Report {
+        public string Id {
             get;
             set;
         }
 
-        public string JobId
-        {
+        public string JobId {
             get;
             set;
         }
 
-        public string NodeName
-        {
+        public string NodeName {
             get;
             set;
         }
 
-        public string IPAddress
-        {
+        public string IPAddress {
             get;
             set;
         }
 
-        public string RerfreshMode
-        {
+        public string RerfreshMode {
             get;
             set;
         }
 
-        public string OperationType
-        {
+        public string OperationType {
             get;
             set;
         }
 
-        public string Status
-        {
+        public string Status {
             get;
             set;
         }
 
-        public bool RebootRequested
-        {
+        public bool RebootRequested {
             get;
             set;
         }
 
-        public DateTime StartTime
-        {
+        public DateTime StartTime {
             get;
             set;
         }
 
-        public DateTime EndTime
-        {
+        public DateTime EndTime {
             get;
             set;
         }
 
-        public DateTime LastModifiedTime
-        {
+        public DateTime LastModifiedTime {
             get;
             set;
         }
 
-        public string LCMVersion
-        {
+        public string LCMVersion {
             get;
             set;
         }
 
-        public string ConfigurationVersion
-        {
+        public string ConfigurationVersion {
             get;
             set;
         }
 
-        public string ReportFormatVersion
-        {
+        public string ReportFormatVersion {
             get;
             set;
         }
 
-        public IList<string> Errors
-        {
+        public IList<string> Errors {
             get;
             set;
         }
 
-        public IList<string> StatusData
-        {
+        public string StatusData {
             get;
             set;
         }
 
-        public string AdditionalData
-        {
+        public string AdditionalData {
             get;
+            set;
+        }
+        public string NotCompliantRessources {
+            get; 
             set;
         }
     }
