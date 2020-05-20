@@ -149,7 +149,7 @@
     <Compile Include="Helpers\BootstrapExtension.cs" />
     <Compile Include="Helpers\ChecksumCalculator.cs" />
     <Compile Include="Helpers\FileActionResult.cs" />
-    <Compile Include="Helpers\ResourcenotInDesiredState.cs" />
+    <Compile Include="Helpers\ResourceState.cs" />
     <Compile Include="Helpers\StatusDataElement.cs" />
     <Compile Include="Helpers\UnityResolverMvc.cs" />
     <Compile Include="Helpers\UnityResolverWebApi.cs" />

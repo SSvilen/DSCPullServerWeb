@@ -144,31 +144,48 @@ namespace DSCPullServerWeb.Services {
                     while (Api.TryMoveNext(sessionId, tableId)) {
                         IDictionary<string, JET_COLUMNID> columnDictionary = Api.GetColumnDictionary(sessionId, tableId);
 
-                        string statusData = (string)Api.DeserializeObjectFromColumn(sessionId, tableId, columnDictionary["StatusData"]);
+                        List<string> statusData = (List<string>)Api.DeserializeObjectFromColumn(sessionId, tableId, columnDictionary["StatusData"]);
 
-                        if (!string.IsNullOrEmpty(statusData)) {
-
+                        if (statusData.Count != 0) {
                             string NodeName = Api.RetrieveColumnAsString(sessionId, tableId, columnDictionary["NodeName"]);
 
-                            List<StatusDataElement> statusDataElements = JsonConvert.DeserializeObject<List<StatusDataElement>>(statusData);
-                            StatusDataElement lastDataElement = statusDataElements.OrderByDescending(element => element.StartDate).ToArray()[0];
-                            List<ResourcenotInDesiredState> resourcesToReport = JsonConvert.DeserializeObject<List<ResourcenotInDesiredState>>(lastDataElement.ResourcesNotInDesiredState);
-
-                            if (reports.Where(r => r.NodeName.Equals(NodeName)).ToList().Count == 1 ||
-                                reports.Select(r => r.NodeName).ToList().SequenceEqual(nodeNames)) {
-                                //We alredy have status for that object or we have gathered status for all objects
-                                break;
+                            if(string.IsNullOrEmpty(NodeName)) {
+                                //No node name present - this record won't be displayed.
+                                continue;
                             }
 
-                            StringBuilder sb = new StringBuilder();
+                            string NotCompliantResources = string.Empty;
 
-                            foreach (ResourcenotInDesiredState resource in resourcesToReport) {
-                                if(sb.Length != 0) {
-                                    sb.Append(';');
-                                    sb.Append(resource.ResourceId);
+                            StatusDataElement dataElement = JsonConvert.DeserializeObject<StatusDataElement>(statusData[0]);
+
+                            List<Report> existingReport = reports.Where(r => r.NodeName == NodeName).ToList();
+
+                            if (existingReport.Count > 1) {
+                                throw new Exception("There are multiple servers with the same name in Reports array!");
+                            }
+                            if (existingReport.Count == 1) {
+                                if (existingReport[0].StartTime < dataElement.StartDate) {
+                                    //A newer record is found - the existing one should be deleted.                                 
+                                    reports.Remove(existingReport[0]);
                                 } else {
-                                    sb.Append(resource.ResourceId);
+                                    //Go to next record.
+                                    continue;
                                 }
+                            }
+
+                            if (dataElement.ResourcesNotInDesiredState?.Count != null) {
+
+                                StringBuilder sb = new StringBuilder();
+
+                                foreach (ResourceState resource in dataElement.ResourcesNotInDesiredState) {
+                                    if (sb.Length != 0) {
+                                        sb.Append(';');
+                                        sb.Append(resource.ResourceId);
+                                    } else {
+                                        sb.Append(resource.ResourceId);
+                                    }
+                                }
+                                NotCompliantResources = sb.ToString();
                             }
 
                             Report report = new Report() {
@@ -187,8 +204,8 @@ namespace DSCPullServerWeb.Services {
                                 ConfigurationVersion = Api.RetrieveColumnAsString(sessionId, tableId, columnDictionary["ConfigurationVersion"]),
                                 ReportFormatVersion = Api.RetrieveColumnAsString(sessionId, tableId, columnDictionary["ReportFormatVersion"]),
                                 Errors = (List<string>)Api.DeserializeObjectFromColumn(sessionId, tableId, columnDictionary["Errors"]),
-                                StatusData = statusData,
-                                NotCompliantRessources = sb.ToString()
+                                StatusData = statusData[0],
+                                NotCompliantResources = NotCompliantResources
                             };
 
                             // Field AdditionalData is only available on WS2016 and WMF 5.1

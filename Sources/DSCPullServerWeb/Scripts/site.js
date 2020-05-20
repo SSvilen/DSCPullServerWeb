@@ -160,7 +160,7 @@ function uiCreateTableRow(page, item) {
             html += uiCreateTableCell(item.OperationType);
             html += uiCreateTableCell(uiFormatDateTime(item.StartTime));
             html += uiCreateTableCell(item.Status);
-            html += uiFormatResourceID(item.NotCompliantRessources);
+            html += uiCreateTableCell(uiFormatResources(item.NotCompliantResources));
             break;
         case "configurations":
             html += uiCreateTableCell(item.Name);
@@ -246,9 +246,9 @@ function uiFormatIPAddress(ipAddress) {
     return ipAddresses.join("<br>")
 }
 
-function uiFormatResources(NotCompliantRessources) {
+function uiFormatResources(NotCompliantResources) {
     var ResourceIds = new Array();
-    NotCompliantRessources.split(";").forEach(function (value, index, array) {
+    NotCompliantResources.split(";").forEach(function (value, index, array) {
         ResourceIds.push(value);
     });
     return ResourceIds.join("<br>")

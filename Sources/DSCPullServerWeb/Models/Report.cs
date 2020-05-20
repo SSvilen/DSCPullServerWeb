@@ -87,7 +87,7 @@ namespace DSCPullServerWeb.Models {
             get;
             set;
         }
-        public string NotCompliantRessources {
+        public string NotCompliantResources {
             get; 
             set;
         }
