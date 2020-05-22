@@ -36,18 +36,18 @@ namespace DSCPullServerWeb.Services
             DatabasePath        = WebConfigurationManager.AppSettings["DatabasePath"];
             RegistrationKeyPath = WebConfigurationManager.AppSettings["RegistrationKeyPath"];
 
-//#if DEBUG
-//            // For debugging, change the path to the App_Data folder, where the
-//            // test files and databases are stored.
-//            ModulePath          = HttpContext.Current.Server.MapPath(ModulePath);
-//            ConfigurationPath   = HttpContext.Current.Server.MapPath(ConfigurationPath);
-//            DatabaseType        = "ESENT";
-//            DatabasePath        = HttpContext.Current.Server.MapPath(DatabasePath);
-//            RegistrationKeyPath = HttpContext.Current.Server.MapPath(RegistrationKeyPath);
-//#endif
+#if DEBUG
+            // For debugging, change the path to the App_Data folder, where the
+            // test files and databases are stored.
+            ModulePath = HttpContext.Current.Server.MapPath(ModulePath);
+            ConfigurationPath = HttpContext.Current.Server.MapPath(ConfigurationPath);
+            DatabaseType = "ESENT";
+            DatabasePath = HttpContext.Current.Server.MapPath(DatabasePath);
+            RegistrationKeyPath = HttpContext.Current.Server.MapPath(RegistrationKeyPath);
+#endif
 
             // Trim path
-            ModulePath          = ModulePath.TrimEnd(new char[] { '\\', '/' });
+            ModulePath = ModulePath.TrimEnd(new char[] { '\\', '/' });
             ConfigurationPath   = ConfigurationPath.TrimEnd(new char[] { '\\', '/' });
             DatabasePath        = DatabasePath.TrimEnd(new char[] { '\\', '/' });
             RegistrationKeyPath = RegistrationKeyPath.TrimEnd(new char[] { '\\', '/' });
