@@ -59,10 +59,10 @@ namespace DSCPullServerWeb.Databases
         {
             Session = new Session(_EsentDatabase.Instance);
 
-            Api.JetAttachDatabase(Session, _EsentDatabase.Filename, AttachDatabaseGrbit.ReadOnly);
+            Api.JetAttachDatabase(Session, _EsentDatabase.Filename, AttachDatabaseGrbit.None);
 
             JET_DBID databaseId;
-            Api.JetOpenDatabase(Session, _EsentDatabase.Filename, null, out databaseId, OpenDatabaseGrbit.ReadOnly);
+            Api.JetOpenDatabase(Session, _EsentDatabase.Filename, null, out databaseId, OpenDatabaseGrbit.None);
 
             DatabaseId = databaseId;
         }

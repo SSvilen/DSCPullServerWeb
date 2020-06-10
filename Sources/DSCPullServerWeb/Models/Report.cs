@@ -43,17 +43,17 @@ namespace DSCPullServerWeb.Models {
             set;
         }
 
-        public DateTime StartTime {
+        public DateTime? StartTime {
             get;
             set;
         }
 
-        public DateTime EndTime {
+        public DateTime? EndTime {
             get;
             set;
         }
 
-        public DateTime LastModifiedTime {
+        public DateTime? LastModifiedTime {
             get;
             set;
         }

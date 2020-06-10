@@ -134,47 +134,37 @@ namespace DSCPullServerWeb.Services {
                 JET_TABLEID tableId;
 
                 if (DatabaseTableExists(sessionId, databaseId, TABLE_STATUS_REPORT)) {
-                    IList<string> nodeNames = GetNamesNodes().Select(node => node.NodeName).ToList();
+                    Api.OpenTable(sessionId, databaseId, TABLE_STATUS_REPORT, OpenTableGrbit.None, out tableId);
 
-                    Api.OpenTable(sessionId, databaseId, TABLE_STATUS_REPORT, OpenTableGrbit.ReadOnly, out tableId);
-
-                    Api.MoveBeforeFirst(session.GetSessionId(), tableId);
-
-
-                    while (Api.TryMoveNext(sessionId, tableId)) {
+                    foreach (string nodeName in GetNamesNodes().Select(node => node.NodeName).ToList()) {
                         IDictionary<string, JET_COLUMNID> columnDictionary = Api.GetColumnDictionary(sessionId, tableId);
 
-                        List<string> statusData = (List<string>)Api.DeserializeObjectFromColumn(sessionId, tableId, columnDictionary["StatusData"]);
+                        if (Api.GetTableIndexes(sessionId, tableId).Any(index => index.Name == "StartDateIndex") == false) {
+                            var indexDef = "+NodeName\0+EndTime\0\0";
+                            //Create search index.
+                            Api.JetCreateIndex(sessionId, tableId, "StartDateIndex", CreateIndexGrbit.None, indexDef, indexDef.Length, 100);
+                        }
 
-                        if (statusData.Count != 0) {
-                            string NodeName = Api.RetrieveColumnAsString(sessionId, tableId, columnDictionary["NodeName"]);
+                        Api.JetSetCurrentIndex(sessionId, tableId, "StartDateIndex");
 
-                            if(string.IsNullOrEmpty(NodeName)) {
-                                //No node name present - this record won't be displayed.
-                                continue;
+                        //Create search keys.
+                        Api.MakeKey(sessionId, tableId, nodeName, Encoding.ASCII, MakeKeyGrbit.NewKey);
+
+                        if (Api.TrySeek(sessionId, tableId, SeekGrbit.SeekEQ)) {
+                            DateTime endTime = Api.RetrieveColumnAsDateTime(sessionId, tableId, columnDictionary["EndTime"]).GetValueOrDefault();
+                            string NotCompliantResources = string.Empty;
+                            string status = string.Empty;
+
+                            if (endTime < DateTime.Now.AddHours(-2)) {
+                                status = "No status reported in the last 2 hours!";
+                            } else {
+                                status = Api.RetrieveColumnAsString(sessionId, tableId, columnDictionary["Status"]);
                             }
 
-                            string NotCompliantResources = string.Empty;
-
+                            List<string> statusData = (List<string>)Api.DeserializeObjectFromColumn(sessionId, tableId, columnDictionary["StatusData"]);
                             StatusDataElement dataElement = JsonConvert.DeserializeObject<StatusDataElement>(statusData[0]);
 
-                            List<Report> existingReport = reports.Where(r => r.NodeName == NodeName).ToList();
-
-                            if (existingReport.Count > 1) {
-                                throw new Exception("There are multiple servers with the same name in Reports array!");
-                            }
-                            if (existingReport.Count == 1) {
-                                if (existingReport[0].StartTime < dataElement.StartDate) {
-                                    //A newer record is found - the existing one should be deleted.                                 
-                                    reports.Remove(existingReport[0]);
-                                } else {
-                                    //Go to next record.
-                                    continue;
-                                }
-                            }
-
                             if (dataElement.ResourcesNotInDesiredState?.Count != null) {
-
                                 StringBuilder sb = new StringBuilder();
 
                                 foreach (ResourceState resource in dataElement.ResourcesNotInDesiredState) {
@@ -185,17 +175,18 @@ namespace DSCPullServerWeb.Services {
                                         sb.Append(resource.ResourceId);
                                     }
                                 }
+
                                 NotCompliantResources = sb.ToString();
                             }
 
                             Report report = new Report() {
                                 Id = Api.RetrieveColumnAsString(sessionId, tableId, columnDictionary["Id"]),
                                 JobId = Api.RetrieveColumnAsString(sessionId, tableId, columnDictionary["JobId"]),
-                                NodeName = NodeName,
+                                NodeName = nodeName,
                                 IPAddress = Api.RetrieveColumnAsString(sessionId, tableId, columnDictionary["IPAddress"]),
                                 RerfreshMode = Api.RetrieveColumnAsString(sessionId, tableId, columnDictionary["RefreshMode"]),
                                 OperationType = Api.RetrieveColumnAsString(sessionId, tableId, columnDictionary["OperationType"]),
-                                Status = Api.RetrieveColumnAsString(sessionId, tableId, columnDictionary["Status"]),
+                                Status = status,
                                 RebootRequested = Api.RetrieveColumnAsBoolean(sessionId, tableId, columnDictionary["RebootRequested"]).GetValueOrDefault(),
                                 StartTime = Api.RetrieveColumnAsDateTime(sessionId, tableId, columnDictionary["StartTime"]).GetValueOrDefault(),
                                 EndTime = Api.RetrieveColumnAsDateTime(sessionId, tableId, columnDictionary["EndTime"]).GetValueOrDefault(),
@@ -206,6 +197,33 @@ namespace DSCPullServerWeb.Services {
                                 Errors = (List<string>)Api.DeserializeObjectFromColumn(sessionId, tableId, columnDictionary["Errors"]),
                                 StatusData = statusData[0],
                                 NotCompliantResources = NotCompliantResources
+                            };
+
+                            // Field AdditionalData is only available on WS2016 and WMF 5.1
+                            if (columnDictionary.Keys.Contains("AdditionalData")) {
+                                report.AdditionalData = Api.RetrieveColumnAsString(sessionId, tableId, columnDictionary["AdditionalData"]);
+                            }
+
+                            reports.Add(report);
+                        } else {
+                            Report report = new Report() {
+                                Id = string.Empty,
+                                JobId = string.Empty,
+                                NodeName = nodeName,
+                                IPAddress = string.Empty,
+                                RerfreshMode = string.Empty,
+                                OperationType = string.Empty,
+                                Status = "No status repot found for that server!",
+                                RebootRequested = false,
+                                StartTime = null,
+                                EndTime = null,
+                                LastModifiedTime = null,
+                                LCMVersion = string.Empty,
+                                ConfigurationVersion = string.Empty,
+                                ReportFormatVersion = string.Empty,
+                                Errors = new List<string>() { string.Empty },
+                                StatusData = string.Empty,
+                                NotCompliantResources = string.Empty
                             };
 
                             // Field AdditionalData is only available on WS2016 and WMF 5.1
